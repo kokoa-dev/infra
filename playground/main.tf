@@ -1,9 +1,14 @@
-variable username {}
-variable public_key {}
-variable cores {}
-variable memory {}
-variable disk_size {}
-variable ip_address {}
+variable "vms" {
+  description = "A map of VMs to create"
+  type = map(object({
+    username = string
+    public_key = string
+    cores = number
+    memory = number
+    disk_size = number
+    ip_address = string
+  }))
+}
 
 terraform {
   required_providers {
@@ -22,27 +27,26 @@ provider "proxmox" {
 }
 
 resource "proxmox_vm_qemu" "vm" {
-  name = "vm-${var.username}"
+  for_each = var.vms
+
+  name = "vm-${each.key}"
   target_node = "prox1"
   clone = "ubuntu-22.04a"
   os_type = "cloud-init"
   boot = "order=virtio0"
-  cores   = "${var.cores}"
-  memory  = "${var.memory}"
+  cores   = each.value.cores
+  memory  = each.value.memory
   disk {
     storage = "local-lvm"
     type = "virtio"
-    size = "${var.disk_size}G"
+    size = "${each.value.disk_size}G"
   }
   network {
     model = "virtio"
     bridge = "vmbr0"
     firewall = false
   }
-  ipconfig0 = "ip=${var.ip_address}/24,gw=192.168.10.1"
-  ciuser = "${var.username}"
-  sshkeys = <<EOF
-${var.public_key}
-EOF
-
+  ipconfig0 = "ip=${each.value.ip_address}/24,gw=192.168.10.1"
+  ciuser = each.value.username
+  sshkeys = each.value.public_key
 }
