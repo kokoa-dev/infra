@@ -13,3 +13,7 @@ qm set 9100 --nameserver 192.168.0.1 --searchdomain example.com
 # Convert VM to VM Template
 qm template 9100
 ```
+
+```
+..\terraform.exe apply -replace='proxmox_vm_qemu.vm[\"nginx\"]' -replace='proxmox_vm_qemu.vm[\"Nexus\"]'  --var-file .\vm.tfvars 
+```
